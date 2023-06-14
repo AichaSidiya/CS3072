@@ -1,0 +1,78 @@
+---
+title: "Quiz 01: Data wrangling"
+Date: "Wenesday, March 15"
+author: "Aicha Sidiya"
+date: "3/15/2023"
+editor_options: 
+  chunk_output_type: console
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Packages
+
+```{r load-packages, message = FALSE}
+library(tidyverse)
+```
+
+# Data
+
+```{r load-data, message = FALSE}
+lego <- read_csv("data/lego.csv")
+```
+
+# Exercise 1
+
+```{r}
+lego <- filter(lego, !is.na(retail_price), !is.na(pieces), pieces != 0)
+```
+Removing these sets shortned the dataframe but made it more expressive
+# Exercise 2
+
+```{r}
+lego2 <- arrange(lego, desc(retail_price))
+lego2[1:3, ] #print first 3 rows 
+```
+
+The three most expensive sets are Millennium Falcon which costs 800\$ and has 7541 pieces, the second most expensive set is Connections Kit which costs 755\$ and has 2455 pices, the third most expensive set is Death Star whcih costs 500\$ and contains 4016 pieces. 
+
+# Exercise 3
+
+```{r}
+lego <- mutate(lego, price_per_piece=retail_price/pieces)
+```
+
+# Exercise 4
+
+```{r}
+lego4 <- arrange(lego, desc(price_per_piece))
+select(lego4[1:5, ], name, themegroup, theme, pieces, price_per_piece)
+```
+
+The sets with the highest prices are the sets consisting of 1 piece only. 
+
+# Exercise 5
+
+```{r}
+lego5 <- filter(lego, theme == "The Lord of the Rings")
+lego6 <- group_by(lego5, subtheme)
+summarize(lego6, cheap_lego = min(retail_price),
+          expensive_lego = max(retail_price))
+```
+
+# Exercise 6
+
+```{r}
+lego7 <- group_by(lego, year)
+yearly_trends <- summarize(lego7, setsNumber = n(), price_per_piece_median = median(price_per_piece))
+```
+
+# Exercise 7
+
+```{r}
+library(ggplot2)
+ggplot(data=yearly_trends, mapping=aes(x=price_per_piece_median, y=year, size = setsNumber)) + geom_point() + labs(title = "Yearly trend of price per piece according to number of sets") 
+```
+
+The sisze of the sets increse over the years.
