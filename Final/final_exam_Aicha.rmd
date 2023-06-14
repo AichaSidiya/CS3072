@@ -1,0 +1,237 @@
+---
+title: "Final_exam"
+output:
+  pdf_document: default
+  html_document: default
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Part1
+
+```{r load-package P1}
+#Load the required packages
+library(tidyverse)
+library(sf)
+
+```
+
+```{r load-data P1}
+#Read the dataset for part 1
+hate_crimes <- read.csv("data/hate_crimes.csv")
+us_states <- st_read("data/States_shapefile.shp", quiet = TRUE)
+us_states %>%
+  slice(1:6)
+```
+Join both data frames that you have (hate_crimes and us_states) by state name. In order
+to complete this task, you need to do the following:
+1- Rename the State_Name variable in us_states dataset to state using rename() function.
+2- Change the states' names in both datasets to lower case using mutate() and tolower()
+functions.
+3- Use left_join() function to merge both data sets into a new data tibble called
+state_crimes
+
+##task1
+```{r Task1 P1}
+us_states <- us_states %>% 
+        rename("state" = "State_Name")
+
+
+us_states <- us_states %>% 
+        mutate(state = tolower(state))
+
+hate_crimes <- hate_crimes %>% 
+        mutate(state = tolower(state))
+
+hate_crime_us_state <- left_join(hate_crimes,us_states,by="state")
+```
+
+##task2
+
+Usin ggplot() and geom_sf(), draw the US states maps that shows the following:
+1- A map that shows US stats colored by hate_crimes_per_100k_splc variable.
+2- A map that shows US stats colored by share_non_white variable.
+Do you see any relation between both maps?
+Stae that have a low rate of hate crimes per 100K have a high share of non white citezen.
+
+```{r Task2 P1}
+ggplot(hate_crime_us_state) +
+geom_sf(aes(fill = hate_crimes_per_100k_splc, geometry = geometry)) +
+scale_fill_gradient(low = "white", high = "#DE0100")+
+labs(title = "Hate Crimes per 100K",
+     fill = "Hate Crimes per 100K") +
+theme_bw()
+
+ggplot(hate_crime_us_state) +
+geom_sf(aes(fill = share_non_white, geometry = geometry))+
+scale_fill_gradient(low = "white", high = "#DE0100")+
+labs(title = "Share of Non White",
+    fill = "Share of non white") +
+theme_bw()
+```
+Come up with a research question based on these data and write it down. Then, create an
+effective data visualization that answers the question and write a brief paragraph
+explaining how your visualization answers the question.
+
+What is the relation between hate crimes and citizen status?
+I created a plot that visulize the distrbution of hate crimes by citezen type. The citezen who have the highest rate crimes are the non-white, trump voters, and white citezen who suffer from poverty
+##task3
+```{r Task3 P1}
+
+scale = 15
+
+ggplot(hate_crime_us_state, aes(x = share_unemployed_seasonal , y = hate_crimes_per_100k_splc)) +
+  geom_smooth(aes(color = "Share unemployed")) +
+  geom_smooth(aes(x = share_population_in_metro_areas/scale, color = "Share population in metro areas")) +
+    geom_smooth(aes(x = share_population_with_high_school_degree/scale, color = "Share population with high school degree")) +
+      geom_smooth(aes(x = share_non_citizen/scale, color = "Share non citezen")) +
+      geom_smooth(aes(x = share_white_poverty/scale, color = "Share white poverty")) +
+  geom_smooth(aes(x = share_non_white/scale, color = "Share non white")) +
+   geom_smooth(aes(x = share_voters_voted_trump/scale, color = "Share voters voted trump")) +
+  labs(title = "Citezen Type VS Hate Crime Rate per 100K",
+       x = "Citezen Type", y = "Hate Crime Rate per 100K") +
+  scale_color_manual(values = c("red", "blue", "orange", "purple", "green", "yellow", "pink"))
+
+```
+
+
+
+
+#Part2
+
+```{r load-package P2}
+#Load the required packages for part 2
+library(caret)
+library(skimr)
+
+```
+
+```{r load-data P2}
+#Read the dataset for part 2
+bikeshare_day <- read.csv("data/bikeshare-day.csv")
+
+```
+
+Recode the season variable to be a factor with meaningful level names as outlined in the
+codebook, with spring as the baseline level.
+1:winter, 2:spring, 3:summer, 4:fall
+##task1
+```{r Task1 P2}
+bikeshare_day <- bikeshare_day %>% 
+  mutate(season = case_when(season == 1 ~ "winter",
+                            season == 2 ~ "spring",
+                            season == 3 ~ "summer",
+                            season == 4 ~ "fall"))
+
+```
+
+##task2
+
+Calculate raw temperature, feeling temperature, humidity, and windspeed as their values
+given in the dataset multiplied by the maximum raw values stated in the codebook for each
+variable. Instead of writing over the existing variables, create new ones with concise but
+informative names.
+
+
+```{r Task2 P2}
+bikeshare_day <- bikeshare_day %>% 
+  mutate(raw_temp_actual = temp * 41,
+         feel_temp_actual = atemp * 50,
+         humidity_actual = hum * 100,
+         windspeed_actual = windspeed * 67)
+
+```
+
+
+Create a visualization displaying the relationship between bike rentals and season. Interpret the
+plot in context of the data.
+
+Mjrity of bike rents happen during summer with 32% rate while winter has the lowest rate of bike rents at arround 14%. Spring and fall have an average renting rate arround 25%.
+
+##task3
+```{r Task3 P2}
+ggplot(bikeshare_day, aes(x = season, y = cnt/sum(cnt))) +
+  geom_bar(stat = "identity", fill = "#20B2AA") +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Season", y = "Bike Rentals", title = "Bike Rentals by Season")
+
+```
+
+
+##task4
+
+```{r Task 4 P2}
+# Create the knn imputation model on the training data
+preProcess_missingdata_model <- preProcess(bikeshare_day, method='knnImpute')
+preProcess_missingdata_model
+
+# Use the imputation model to predict the values of missing data points
+library(RANN)  # required for knnImpute
+bikeshare_day_impute <- predict(preProcess_missingdata_model, newdata = bikeshare_day)
+anyNA(bikeshare_day_impute)
+```
+
+```{r}
+# Store X and Y for later use.
+X = bikeshare_day_impute[, 3:13]
+y = bikeshare_day_impute$cnt
+
+```
+
+```{r}
+# Split the data into training and testing sets
+set.seed(42)
+train_indices <- createDataPartition(y, p = 0.8, list = FALSE)
+X_train <- X[train_indices,]
+y_train <- y[train_indices]
+X_test <- X[-train_indices,]
+y_test <- y[-train_indices]
+
+```
+
+Linear Regression
+```{r}
+# Create and fit the linear regression model
+model_LR <- train(X_train, y_train, method = "lm")
+
+# Make predictions on the test set
+y_pred_LR <- predict(model_LR, X_test)
+
+# Evaluate the model using mean squared error
+mse_LR <- mean((y_test - y_pred_LR)^2)
+print(paste("Mean Squared Error:", mse_LR))
+
+# Calculate R-squared
+r2_LR <- cor(y_pred_LR, y_test)^2
+print(paste("R-squared:", r2_LR))
+
+# Print the weights
+print(model_LR$finalModel$coefficients)
+
+```
+Random Forest
+```{r}
+# Create and fit the Random Forest regression model
+model_RF <- train(
+  x = X_train, y = y_train,
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneLength = 10
+)
+
+# Make predictions on the test set
+y_pred_RF <- predict(model_RF, X_test)
+
+# Evaluate the model using mean squared error
+mse_RF <- mean((y_pred_RF - y_test)^2)
+print(paste("Mean Squared Error:", mse_RF))
+
+# Calculate R-squared value
+r2_RF <- 1 - sum((y_test - y_pred_RF)^2) / sum((y_test - mean(y_test))^2)
+print(paste("R-squared:", r2_RF))
+```
+
