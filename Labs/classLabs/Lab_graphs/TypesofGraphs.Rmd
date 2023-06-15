@@ -1,0 +1,248 @@
+---
+title: "Lab3_12Feb"
+author: "Aicha"
+date: "2023-02-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## import tidyverse
+This library it is package that includes several functions for data importing and processing 
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+```{r}
+mn_homes <- read.csv("data/mn_homes.csv")
+glimpse(mn_homes)
+```
+
+## Fist Graph
+We usally use ggplot function to draw plots. It has several parameters as the following: 
+1. data: Here we specify the dataframe that we will use
+2. mapping: Here you specify the x-axis and y-axis dimensions (scale)
+3. Add drawing component
+
+```{r}
+ggplot(data=mn_homes, mapping=aes(x=area, y=salesprice)) + geom_smooth() + geom_point()
+```
+As we can see above geom_point() represents each record in the dataframe with a point in the plot. It usally helps to detect outliers. There are different types of drawings. For example, we can use geom_smooth() to represent the relation between two variables with a curved line as you can see above.
+
+## aes()
+aes() method also allows us to change some visual propreties in the plot including: shape, color, size, and transperancy. For example, we can change the color of the points in the plot based on another variable (such as fireplace)
+=> which allow visualization of more than 2 variables (3 or more)
+=> <span style="color:green">Example</span>, shape=23, fill="blue", color="darkred" size = 20
+<span style="color:red">Note: </span> not all visualization make sense
+
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=area, y=salesprice, color=beds, 
+                   shape=fireplace)) + geom_point(size=2)
+```
+
+## Labels
+We can also add labels to graph using labs() methods as the following:
+
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=area, 
+                   y=salesprice, color=fireplace)) +
+  geom_point() + 
+  labs(title = "Sales price vs area of homes 
+       in Minneapolis, MN", x="area (square feet)", 
+       y="sales price (dollars)")
+```
+
+## Practice
+**Question:** Are the above visualizations effective? Why or why not? How might you improve them?
+No this visualization is not effetive we can't notice a clear difference between sizes we can try changing the true false to shape intead of colors. 
+```{r}
+ggplot(data = mn_homes, 
+mapping = aes(x = area, y = salesprice,
+shape = fireplace,
+size = lotsize)) + 
+geom_point() + 
+labs(title = "Sales price vs. area of homes in Minneapolis, MN",
+x = "Area (square feet)", y = "Sales Price (dollars)") 
+
+```
+
+## Faceting
+Faceting: having different graphs based on different values of specific variable. For example: if we want to make a similar graph to what we have above but for wich community (which a variable in our dataframe), we can do the following. 
+=> in faceting you can chnage the number of rows.
+A. Facet Wrap
+
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=area, y=salesprice, 
+                   color=fireplace)) + 
+  geom_point() + 
+  labs(title = "Sales price vs. area of homes in 
+       Minneapolis, MN",
+       x = "Area (square feet)", 
+       y = "Sales Price (dollars)") + 
+  facet_wrap(~community)
+```
+B. Facet Grid
+In facet grid you can plot:
+1. columns: facet_grid(. ~ beds)
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=area, y=salesprice, 
+                   color=fireplace)) + 
+  geom_point() + 
+  labs(title = "Sales price vs. area of homes 
+       in Minneapolis, MN",
+       x = "Area (square feet)", 
+       y = "Sales Price (dollars)") + 
+  facet_grid(.~beds)
+```
+
+2. rows: facet_grid(beds ~ .)
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=area, y=salesprice, 
+                   color=fireplace)) + 
+  geom_point() + 
+  labs(title = "Sales price vs. area of homes 
+       in Minneapolis, MN",
+       x = "Area (square feet)", 
+       y = "Sales Price (dollars)") + 
+  facet_grid(beds~.)
+```
+
+3. 2 variables: facet_grid(beds ~ baths) 
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=area, y=salesprice, 
+                   color=fireplace)) + 
+  geom_point() + 
+  labs(title = "Sales price vs. area of homes 
+       in Minneapolis, MN",
+       x = "Area (square feet)", 
+       y = "Sales Price (dollars)") + 
+  facet_grid(beds~baths)
+```
+
+
+## Facet_Wrap VS Facet_Grid
+The facet_grid() function will produce a grid of plots for each combination of variables that you specify, even if some plots are empty. The facet_wrap() function will only produce plots for the combinations of variables that have values, which means it won't produce any empty plots.
+
+## Hint
+If you need help ?ggplot
+
+## Practice
+Create a scatterplot using variables of your choosing using the `mn_homes` data.
+
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=area, y=salesprice)) + 
+  geom_point() + 
+  labs(title = "Sales price vs area of homes in 
+       Minneapolis, MN", 
+       x="area (square feet)", 
+       y="sales price (dollars)")
+```
+
+Modify your scatterplot above by coloring the points for each community.
+
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=area, y=salesprice, 
+                   color=community)) + 
+  geom_point() + 
+  labs(title = "Sales price vs area of homes 
+       in Minneapolis, MN", x="area (square feet)", 
+       y="sales price (dollars)")
+```
+
+## Bar
+Another type of plotting is the bar plot, it used to visulaize categorical variables.
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=community, 
+                   y =after_stat(prop),
+                   group=1)) + 
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Coloring Bars
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=community, fill=community)) + 
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+We can also color bars using some variables as the following
+
+```{r}
+ggplot(data=mn_homes, 
+       mapping=aes(x=community, fill=fireplace)) + 
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+Sometimes we prefer to add the mapping parameter to the geom_chart function and not in the ggplot function in case we would like to plot more than one 
+
+```{r}
+ggplot(data=mn_homes) +
+  geom_bar(mapping=aes(x=community, fill=fireplace))+
+  theme(axis.text.x = element_text(angle = 90))
+```
+### Flipping cordinates:
+```{r}
+ggplot(data=mn_homes) +
+  geom_bar(mapping=aes(x=community, fill=fireplace))+
+  coord_flip()
+```
+
+## Histogram
+We can use histogram charts for continous variables as the following:
+
+```{r}
+ggplot(data = mn_homes, 
+       mapping = aes(x=salesprice)) + 
+  geom_histogram(bins=10)
+```
+
+## Boxplot
+Boxplot charts are used also to represent numerical variables distribution across levels of categorical variables. For example, in the chart below we will show the distribuition of house prices across different communities.
+
+```{r}
+ggplot(data=mn_homes, mapping=aes(x=community, y=salesprice)) + geom_boxplot() + coord_flip()
+```
+
+### How to read it
+box is the majority of values, thick line for average value, dots for outliers, line min and max value
+
+## Eval and Echo
+=> Commands added to r: **{r: echo=TRUE/FALSE, eval=TRUE/FALSE}** 
+=> echo if true prints code in pdf if not does not print it
+=> eval execute code if true and if false does not execute it (doesn't even check if its true)
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
