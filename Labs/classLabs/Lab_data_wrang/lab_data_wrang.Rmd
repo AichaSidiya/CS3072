@@ -1,0 +1,179 @@
+---
+title: "Lab4_26Feb"
+author: "Aicha"
+date: "2023-02-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+## Data Wrangling
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+The data we will use is presenditial dataset which is built in tidyverse
+```{r}
+data <- presidential
+head(data) #print first 5 rows
+data # prints all dataframe
+```
+
+## select()
+The first method that we will use to process the data is **select()** which is used to manipulate columns
+
+```{r}
+select(data, name, party) 
+#select range of columns
+select(data, name:end)
+```
+Also, we cam use select to reorder the columns in data frame
+
+```{r}
+data <- select(data, name, party, start, end)
+```
+
+We can also hnage the name of a variable using select functions as the following
+
+```{r}
+select(data, president = name, startdate=start, enddate=end)
+```
+select helps us to **drop** some columns as well
+
+```{r}
+select(data, -end)
+```
+
+several methods can be used within select. We will check some of them below
+
+```{r}
+select(data, contains("ar")) # columns that contain ar
+select(data, starts_with("s")) # columns that start with s
+select(data, ends_with("y")) # columns that ends with y
+
+# begin with the stated colun and the print everything
+select(data, party,everything()) 
+
+# columns that match the given regular expression 
+select(data, matches("^s")) 
+```
+## Filter
+Filter() function used to select soe rows from data frame (filter for rows, select for columns)
+
+```{r}
+republican_pres <- filter(data, party == "Republican")
+```
+
+## arrange()
+This function is used to sort the dataframe based on some variables (ascending or descending using (desc))
+
+```{r}
+arrange(data, desc(name))
+```
+
+## mutate()
+we use mutate function to create new variables or columns
+
+```{r}
+data2 <- mutate(data, duration=end-start,
+                years=as.integer(duration/365), 
+                months=as.integer((duration-(years*365))/30))
+data2
+```
+## transmutate
+we can also create column but not add them to the table 
+=> this column prints true if president was during cold war
+
+```{r}
+transmute(data, CW = start < "1990-03-11")
+```
+
+## summurize
+summuarize can be used to summarize the table in one row as per some functions
+=> this summary provide us with the average duration of all president, the max and mean durations, the total duration, and the number of president which is calculated by counting number of rows. The result is grouped by party.
+
+```{r}
+data3 <- group_by(data2, party)
+summarize(data3, averageDays = mean(duration),
+          maxDuration = max(duration),
+          minDuration = min(duration),
+          total=sum(duration),
+          presidentNumber = n())
+#n_distinct counts distinct values
+# n() counts number of rows
+```
+## Other Functions
+we have other useful functions
+
+```{r}
+#adds column with count of repitions of this value
+add_count(data, party) 
+
+# we change the values of the rows for example 
+#from string to num for better processing in ml 
+mutate(data, party=recode(party, "Republican"=1, "Democratic"=2))
+
+pull(data, party) # transform column to vector useful in ml
+
+glimpse(data3)
+
+slice(data, 1:5)
+
+sample_n(data, 4)
+
+training <- sample_frac(data, 0.8)
+testing <- sample_frac(data, 0.2)
+training
+testing
+```
+```{r}
+# changing values in rows depending on certain values using boolean 
+mutate(data2, 
+       duration = case_when(duration == 2922 ~ "Two ters",
+                            duration == 1461 ~ "One term",
+                            TRUE ~ "Special Case"))
+```
+
+```{r}
+data4 <- arrange(data, start)
+data4
+#lag gives previous values by number of 
+#tows here we have n=1 whci means just the previous row
+mutate(data4, previous = lag(name, n=1)) 
+```
+
+## Piping
+allows us to nest output of one function into the other
+
+```{r}
+data5 <- data %>% mutate(duration = end-start) %>%
+  mutate(terms = case_when(duration == 2922 ~ "Two",
+                           duration == 1461 ~ "One",
+                           TRUE ~ "Abnormal")) %>%
+  filter(terms == "Two")
+data5
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
